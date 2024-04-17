@@ -93,8 +93,7 @@ router.get("/profile", async (req: Request, res: Response) => {
 });
 
 router.post("/logout", async (req: Request, res: Response) => {
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logout successful" });
+  res.cookie("token", "").json({ message: "Logged out" });
 });
 
 export default router;
