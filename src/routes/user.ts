@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { VerifyErrors } from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 
@@ -74,6 +74,27 @@ router.post("/login", async (req: Request, res: Response) => {
   } else {
     return res.status(400).json({ error: "Invalid credentials" });
   }
+});
+
+router.get("/profile", async (req: Request, res: Response) => {
+  const { token } = req.cookies;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  jwt.verify(token, secret, (err: VerifyErrors | null, decoded: any) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    res.status(200).json(decoded);
+  })
+});
+
+router.post("/logout", async (req: Request, res: Response) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logout successful" });
 });
 
 export default router;
