@@ -2,12 +2,16 @@ import { Request, Response, Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 
 import UserModel from "../../models/user";
 
+dotenv.config();
 const router = Router();
 const salt = bcrypt.genSaltSync(10);
 const secret = process.env.SECRET as string;
+
+router.use(cookieParser());
 
 router.post("/register", async (req: Request, res: Response) => {
   const { firstName, lastName, email, phone, password } = req.body;
@@ -53,6 +57,7 @@ router.post("/login", async (req: Request, res: Response) => {
 
     jwt.sign(tokenPayload, secret, { expiresIn: "1h" }, (err, token) => {
       if (err) {
+        console.error(err);
         return res.status(500).json({ error: err });
       }
 

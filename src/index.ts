@@ -11,7 +11,6 @@ const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 mongoose.connect(process.env.CLUSTER_URI as string).then(() => {
   console.log("Connected to MongoDB");
