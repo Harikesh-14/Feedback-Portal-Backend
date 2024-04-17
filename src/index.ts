@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 import userRoutes from "./routes/user";
-import cookieParser from "cookie-parser";
+import feedbackRoutes from "./routes/feedback";
 
 dotenv.config();
 const app = express();
@@ -19,6 +19,7 @@ mongoose.connect(process.env.CLUSTER_URI as string).then(() => {
 });
 
 app.use("/user", userRoutes)
+app.use("/feedback", feedbackRoutes)
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
