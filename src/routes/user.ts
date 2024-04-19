@@ -17,83 +17,94 @@ router.post("/register", async (req: Request, res: Response) => {
   const { firstName, lastName, email, phone, password } = req.body;
 
   try {
+    const existingUser = await UserModel.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, salt);
     const user = await UserModel.create({
       firstName,
       lastName,
       email,
       phone,
-      password: bcrypt.hashSync(password, salt),
+      password: hashedPassword,
     });
 
     res.status(201).json(user);
   } catch (err) {
-    if (err instanceof Error && (err as any).code === 11000) {
-      return res.status(400).json({ error: "Email already exists" });
-    } else {
-      res.status(500).json({ error: err });
-    }
+    console.error("Error during registration:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 router.post("/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  const userDoc = await UserModel.findOne({ email: username });
+  try {
+    const user = await UserModel.findOne({ email: username });
 
-  if (!userDoc) {
-    return res.status(400).json({ error: "Invalid credentials" });
-  }
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
 
-  const isPasswordValid = bcrypt.compareSync(password, userDoc.password);
-
-  if (isPasswordValid) {
     const tokenPayload = {
-      id: userDoc._id,
-      firstName: userDoc.firstName,
-      lastName: userDoc.lastName,
-      username: userDoc.email,
-      phone: userDoc.phone,
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.email,
+      phone: user.phone,
     };
 
-    jwt.sign(tokenPayload, secret, { expiresIn: "1h" }, (err, token) => {
+    jwt.sign(tokenPayload, secret, {}, (err, token) => {
       if (err) {
-        console.error(err);
-        return res.status(500).json({ error: err });
+        console.error("Error during token generation:", err);
+        return res.status(500).json({ error: "Internal server error" });
       }
 
-      res.cookie("token", token, { httpOnly: true, secure: true });
+      res.cookie("token", token, { httpOnly: true, secure: process.env.SECRET === "production" });
       res.status(200).json({
-        id: userDoc._id,
-        firstName: userDoc.firstName,
-        lastName: userDoc.lastName,
-        username: userDoc.email,
-        phone: userDoc.phone,
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.email,
+        phone: user.phone,
         message: "Login successful"
       });
     });
-  } else {
-    return res.status(400).json({ error: "Invalid credentials" });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 router.get("/profile", async (req: Request, res: Response) => {
-  const { token } = req.cookies;
+  const token = req.headers.authorization?.split(" ")[1];
+  console.log(token);
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  jwt.verify(token, secret, (err: VerifyErrors | null, decoded: any) => {
-    if (err) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  try {
+    jwt.verify(token, secret, (err: VerifyErrors | null, decoded: any) => {
+      if (err) {
+        console.error("Error verifying token:", err);
+        return res.status(401).json({ error: "Unauthorized" });
+      }
 
-    res.status(200).json(decoded);
-  })
+      res.status(200).json(decoded);
+    });
+  } catch (err) {
+    console.error("Error verifying token:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
+
 router.post("/logout", async (req: Request, res: Response) => {
-  res.cookie("token", "").json({ message: "Logged out" });
+  res.clearCookie("token").json({ message: "Logged out" });
 });
 
 export default router;
