@@ -49,39 +49,37 @@ router.post("/login", async (req: Request, res: Response) => {
 
   const passOk = bcrypt.compareSync(password, userDoc.password)
 
-  if (passOk) {
-    const tokenPayload = {
+  if (!passOk) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const tokenPayload = {
+    username,
+    firstName: userDoc.firstName,
+    lastName: userDoc.lastName,
+    phone: userDoc.phone,
+    id: userDoc._id,
+    message: 'Logged in',
+  }
+
+  try {
+    const token = jwt.sign(tokenPayload, secret, {});
+    res.cookie('token', token, { httpOnly: true, secure: true }).json({
+      message: 'Logged in',
       username,
       firstName: userDoc.firstName,
       lastName: userDoc.lastName,
       phone: userDoc.phone,
       id: userDoc._id,
-    }
-
-    jwt.sign(tokenPayload, secret, {}, (err, token) => {
-      if (err) {
-        console.error('JWT signing error:', err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-
-      res.cookie('token', token, {httpOnly: true, secure: true}).json({
-        message: 'Logged in',
-        username,
-        firstName: userDoc.firstName,
-        lastName: userDoc.lastName,
-        phone: userDoc.phone,
-        id: userDoc._id,
-      })
-
-    })
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
+    });
+  } catch (err) {
+    console.error('JWT signing error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.get("/profile", async (req: Request, res: Response) => {
   const { token } = req.cookies
-  console.log(req.cookies)
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
