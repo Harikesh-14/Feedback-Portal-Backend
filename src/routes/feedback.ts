@@ -1,26 +1,41 @@
 import { Request, Response, Router } from "express";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+dotenv.config();
+
 import FeedbackModel from "../../models/feedback";
 
 const router = Router();
+router.use(cookieParser());
+const secret = process.env.SECRET as string;
 
 router.post("/submit", async (req: Request, res: Response) => {
-  const { feedback, rating, companyName, location } = req.body;
-
-  if (!feedback || !rating || !companyName || !location) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-  
+  const { token } = req.cookies;
   try {
-    const feedbackDoc = await FeedbackModel.create({
-      feedback,
-      companyName,
-      rating,
-      location,
-    })
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    res.status(201).json(feedbackDoc);
+    jwt.verify(token, secret, {}, async (err, info) => {
+      if (err) throw err
+
+      const { companyName, location, headquarter, industry, feedback, rating } = req.body;
+      const feedbackDoc = await FeedbackModel.create({
+        companyName,
+        location,
+        headquarter,
+        industry,
+        feedback,
+        rating,
+        author: (info as { id: string }).id
+      });
+
+      res.json(feedbackDoc)
+    })
   } catch (err) {
-    res.status(500).json({ error: err });
+    console.error("Error creating the feedback\n", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 })
 

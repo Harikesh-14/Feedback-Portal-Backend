@@ -10,6 +10,14 @@ const FeedbackSchema = new Schema({
     type: String,
     required: true
   },
+  headquarter: {
+    type: String,
+    required: true
+  },
+  industry: {
+    type: String,
+    required: true
+  },
   feedback: {
     type: String,
     required: true
