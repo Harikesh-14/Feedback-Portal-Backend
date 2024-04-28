@@ -70,4 +70,25 @@ router.get("/average-rating", async (req: Request, res: Response) => {
   }
 })
 
+router.get("/total-reviews", async (req: Request, res: Response) => {
+  try {
+    const pipeline = [
+      {
+        $group: {
+          _id: "$companyName",
+          totalReviews: { $sum: 1 },
+          location: { $first: "$location" },
+        }
+      }
+    ];
+
+    const totalReviews = await FeedbackModel.aggregate(pipeline);
+
+    res.json(totalReviews);
+  } catch (err) {
+    console.error("Error getting the total reviews\n", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
