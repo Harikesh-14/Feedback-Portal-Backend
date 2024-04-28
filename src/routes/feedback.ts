@@ -49,4 +49,25 @@ router.get("/all", async (req: Request, res: Response) => {
   res.status(200).json(feedbackDoc);
 })
 
+router.get("/average-rating", async (req: Request, res: Response) => {
+  try {
+    const pipeline = [
+      {
+        $group: {
+          _id: "$companyName",
+          averageRating: { $avg: "$rating" },
+          location: { $first: "$location" },
+        }
+      }
+    ];
+
+    const averageRating = await FeedbackModel.aggregate(pipeline);
+
+    res.json(averageRating);
+  } catch (err) {
+    console.error("Error getting the average rating\n", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
+
 export default router;
