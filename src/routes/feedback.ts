@@ -54,9 +54,8 @@ router.get("/average-rating", async (req: Request, res: Response) => {
     const pipeline = [
       {
         $group: {
-          _id: "$companyName",
+          _id: {companyName: "$companyName", location: "$location"},
           averageRating: { $avg: "$rating" },
-          location: { $first: "$location" },
         }
       }
     ];
@@ -75,9 +74,8 @@ router.get("/total-reviews", async (req: Request, res: Response) => {
     const pipeline = [
       {
         $group: {
-          _id: "$companyName",
+          _id: {companyName: "$companyName", location: "$location"},
           totalReviews: { $sum: 1 },
-          location: { $first: "$location" },
         }
       }
     ];
