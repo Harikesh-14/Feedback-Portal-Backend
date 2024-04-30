@@ -89,4 +89,28 @@ router.get("/total-reviews", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/my-feedback", async (req: Request, res: Response) => {
+  const { token } = req.cookies;
+  try {
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    jwt.verify(token, secret, {}, async (err, info) => {
+      if (err) throw err
+
+      const feedbackDoc = await FeedbackModel.find({ author: (info as { id: string }).id });
+
+      if (!feedbackDoc) {
+        return res.status(404).json({ error: "No feedback found" });
+      }
+
+      res.status(200).json(feedbackDoc);
+    })
+  } catch (err) {
+    console.error("Error getting the feedback\n", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
+
 export default router;
