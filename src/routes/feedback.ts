@@ -40,7 +40,7 @@ router.post("/submit", async (req: Request, res: Response) => {
 })
 
 router.get("/all", async (req: Request, res: Response) => {
-  const feedbackDoc = await FeedbackModel.find();
+  const feedbackDoc = await FeedbackModel.find().populate('author', 'firstName lastName email');
 
   if (!feedbackDoc) {
     return res.status(404).json({ error: "No feedback found" });
