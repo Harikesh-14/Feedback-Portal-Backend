@@ -113,34 +113,4 @@ router.get("/my-feedback", async (req: Request, res: Response) => {
   }
 })
 
-router.get("/low-to-high-feedback", async (req: Request, res: Response) => {
-  try {
-    const feedbackDoc = await FeedbackModel.find().sort({ rating: 1 });
-
-    if (!feedbackDoc) {
-      return res.status(404).json({ error: "No feedback found" });
-    }
-
-    res.status(200).json(feedbackDoc);
-  } catch (err) {
-    console.error("Error getting the feedback\n", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-})
-
-router.get("/high-to-low-feedback", async (req: Request, res: Response) => {
-  try {
-    const feedbackDoc = await FeedbackModel.find().sort({ rating: -1 });
-
-    if (!feedbackDoc) {
-      return res.status(404).json({ error: "No feedback found" });
-    }
-
-    res.status(200).json(feedbackDoc);
-  } catch (err) {
-    console.error("Error getting the feedback\n", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-})
-
 export default router;
